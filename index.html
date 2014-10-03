@@ -516,6 +516,111 @@ docker run \
 				</section>
 
 				<section>
+					<section>
+						<h2>real life</h2>
+						<p>
+							Yeah, you know, docker is cool and all, but in a VM or bare metal server we just do
+							`systemctl enable nginx.service` and we are sure if the machine reboots everything is up
+						</p>
+						<p><small>on debian it would be `service nginx start`</small></p>
+					</section>
+
+					<section>
+						<h2>We can do that</h2>
+						<p>
+							We can easily write unitfiles for our docker containers so they will be started automatically
+							at boot.
+						</p>
+					</section>
+
+					<section>
+						<h2>fpm</h2>
+						<pre class='stretch'><code class='ini'>
+[Unit]
+Description=mybb-fpm
+After=docker.service
+
+[Service]
+TimeoutStartSec=0
+ExecStartPre=-/usr/bin/docker kill mybb-fpm
+ExecStartPre=-/usr/bin/docker rm mybb-fpm
+ExecStart=/usr/bin/docker run --name mybb-fpm
+    -v /srv/mybb:/srv/mybb -p 192.168.1.1:9002:9000 sample/mybb-fpm
+ExecStop=/usr/bin/docker stop mybb-fpm
+
+[Install]
+WantedBy=multi-user.target
+						</code></pre>
+					</section>
+
+					<section>
+						<h2>percona</h2>
+						<pre class='stretch'><code class='ini'>
+[Unit]
+Description=percona
+After=docker.service
+
+[Service]
+TimeoutStartSec=0
+ExecStartPre=-/usr/bin/docker kill percona
+ExecStartPre=-/usr/bin/docker rm percona
+ExecStart=/usr/bin/docker run --name percona
+    -v /var/lib/mysql:/var/lib/mysql -p 192.168.1.1:3306:3306 blackikeeagle/percona
+ExecStop=/usr/bin/docker stop percona
+
+[Install]
+WantedBy=multi-user.target
+						</code></pre>
+					</section>
+
+					<section>
+						<h2>nginx</h2>
+						<pre class='stretch'><code class='ini'>
+[Unit]
+Description=nginx
+After=docker.service
+
+[Service]
+TimeoutStartSec=0
+ExecStartPre=-/usr/bin/docker kill nginx
+ExecStartPre=-/usr/bin/docker rm nginx
+ExecStart=/usr/bin/docker run --name nginx
+    -v /srv/wordpress:/srv/wordpress -v /srv/mybb:/srv/mybb
+    -v /srv/owncloud:/srv/owncloud -p 0.0.0.0:80:80 blackikeeagle/nginx
+ExecStop=/usr/bin/docker stop nginx
+
+[Install]
+WantedBy=multi-user.target
+						</code></pre>
+					</section>
+
+					<section>
+						<h2>why systemd</h2>
+						<p>
+							systemd is by now the most spread next generation init system for linux.
+							Even debian and ubuntu have voted to use it in the future. Although these still use
+							upstart, we need to look at the future.
+						</p>
+					</section>
+
+					<section>
+						<h2>enable on boot</h2>
+						<pre><code class='bash'>
+$ systemctl enable wordpress-fpm.service \
+    mybb-fpm.service owncloud-fpm.service \
+    percona.service nginx.service
+						</code></pre>
+					</section>
+
+					<section>
+						<h2>done</h2>
+						<p>
+							We now have a working minimal system where all our services are running in docker containers.
+						</p>
+					</section>
+				</section>
+
+				<section>
 					<h2>Questions ?</h2>
 					<p class='fragment'><small>WARNING: you might have a lot of questions I don't know the answer to.</small></p>
 				</section>
