@@ -347,6 +347,34 @@ blackikeeagle/archlinux   latest              b4bbf04b414e        5 days ago    
 				</section>
 
 				<section>
+					<section>
+						<h2>Running a container</h2>
+						<p><small>for all options: docker run --help</small></p>
+					</section>
+
+					<section>
+						<h2>Testdrive a container</h2>
+						<pre><code class='bash'>
+docker run blackikeeagle/percona
+						</code></pre>
+						<p>
+							We'll see if it stays up. If so we've done superb
+						</p>
+					</section>
+
+					<section>
+						<h2>Maybe debug</h2>
+						<pre><code class='bash'>
+docker run -i -t blackikeeagle/percona /bin/bash
+						</code></pre>
+						<p>
+							We override the default CMD here with /bin/bash. This way we might be able to find out why
+							a container is not running as we were expecting.
+						</p>
+					</section>
+				</section>
+
+				<section>
 					<h2>Questions ?</h2>
 					<p class='fragment'><small>WARNING: you might have a lot of questions I don't know the answer to.</small></p>
 				</section>
