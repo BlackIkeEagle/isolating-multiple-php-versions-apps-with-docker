@@ -158,6 +158,158 @@
 				</section>
 
 				<section>
+					<section>
+						<h2>Building the containers</h2>
+						<p class='red'>
+							NOTE:<br />
+							Newlines will be added for presentation pruposes<br />
+							Only the relevant parts of the Dockerfile's is displayed
+						</p>
+					</section>
+
+					<section>
+						<h2>nginx</h2>
+						<pre class='stretch'><code class='bash'>
+FROM blackikeeagle/archlinux
+
+RUN pacman -Syu --noconfirm nginx
+RUN pacman -Scc --noconfirm
+RUN mkdir -p /etc/nginx/conf.d
+RUN mkdir -p /etc/nginx/sites-available
+RUN mkdir -p /etc/nginx/sites-enabled
+ADD ./config/nginx.conf /etc/nginx/nginx.conf
+ADD ./config/01-wordpress.conf /etc/nginx/sites-available/01-wordpress.conf
+ADD ./config/02-mybb.conf /etc/nginx/sites-available/02-mybb.conf
+ADD ./config/03-owncloud.conf /etc/nginx/sites-available/03-owncloud.conf
+RUN ln -s /etc/nginx/sites-available/01-wordpress.conf
+    /etc/nginx/sites-enabled/01-wordpress.conf
+RUN ln -s /etc/nginx/sites-available/02-mybb.conf
+    /etc/nginx/sites-enabled/02-mybb.conf
+RUN ln -s /etc/nginx/sites-available/03-owncloud.conf
+    /etc/nginx/sites-enabled/03-owncloud.conf
+
+EXPOSE 80
+
+CMD ["/usr/sbin/nginx"]
+						</code></pre>
+					</section>
+
+					<section>
+						<h2>percona</h2>
+						<pre class='stretch'><code class='bash'>
+FROM blackikeeagle/archlinux
+
+RUN pacman -Syu --noconfirm percona-server
+RUN pacman -Scc --noconfirm
+RUN rm /etc/mysql/my.cnf
+ADD ./my.cnf /etc/mysql/my.cnf
+ADD ./create-mysql-structure.sh /opt/create-mysql-structure.sh
+RUN chmod +x /opt/create-mysql-structure.sh
+
+EXPOSE 3306
+
+USER mysql
+
+CMD ["/usr/bin/mysqld_safe", "--pid-file=/run/mysqld/mysqld.pid",
+    "--bind-address=0.0.0.0", "--skip-name-resolve", "--datadir=/var/lib/mysql"]
+						</code></pre>
+					</section>
+
+					<section>
+						<h2>php 5.3</h2>
+						<pre class='stretch'><code class='bash'>
+FROM ubuntu:12.04
+
+# wordpress php deps
+RUN apt-get -y install php5-fpm php5-mysql php5-curl php5-gd php5-intl php-pear...
+
+RUN sed -e 's/.*daemonize.*/daemonize = no/' -i /etc/php5/fpm/php-fpm.conf
+RUN sed -e 's/.*cgi.fix_pathinfo.*/cgi.fix_pathinfo=0/'
+    -e 's/upload_max_filesize.*/upload_max_filesize = 100M/'
+    -e 's/post_max_size.*/post_max_size = 100M/' -i /etc/php5/fpm/php.ini
+RUN sed 's/.*listen =.*/listen = 0.0.0.0:9000/' -i /etc/php5/fpm/pool.d/www.conf
+RUN sed -e 's/.*listen =.*/listen = 0.0.0.0:9000/'
+    -e 's/.*catch_workers_output.*/catch_workers_output = yes/'
+    -i /etc/php5/fpm/pool.d/www.conf
+RUN echo "php_admin_value[error_log] = stdout\nphp_admin_flag[log_errors] = on"
+    >> /etc/php5/fpm/pool.d/www.conf
+
+EXPOSE 9000
+
+CMD ["/usr/sbin/php5-fpm"]
+						</code></pre>
+					</section>
+
+					<section>
+						<h2>php 5.5</h2>
+						<pre class='stretch'><code class='bash'>
+FROM ubuntu:14.04
+
+# mybb php deps
+RUN apt-get -y install php5-fpm php5-mysql php5-gd php5-intl php-pear php5-sqlite
+
+RUN sed -e 's/.*cgi.fix_pathinfo.*/cgi.fix_pathinfo=0/' -i /etc/php5/fpm/php.ini
+RUN sed -e 's/.*listen =.*/listen = 0.0.0.0:9000/'
+    -e 's/.*catch_workers_output.*/catch_workers_output = yes/'
+    -i /etc/php5/fpm/pool.d/www.conf
+RUN echo "php_admin_value[error_log] = stdout\nphp_admin_flag[log_errors] = on"
+    >> /etc/php5/fpm/pool.d/www.conf
+
+EXPOSE 9000
+
+CMD ["/usr/sbin/php5-fpm", "-F"]
+						</code></pre>
+					</section>
+
+					<section>
+						<h2>php 5.6</h2>
+						<pre class='stretch'><code class='bash'>
+FROM blackikeeagle/archlinux
+
+RUN pacman -Syu --noconfirm php-fpm php-gd php-mcrypt php-sqlite php-apcu
+RUN pacman -Scc --noconfirm
+
+RUN sed -e 's/.*cgi.fix_pathinfo.*/cgi.fix_pathinfo=0/' -i /etc/php/php.ini
+RUN sed -e 's/.*listen =.*/listen = 0.0.0.0:9000/'
+    -e 's/.*catch_workers_output.*/catch_workers_output = yes/'
+    -i /etc/php/php-fpm.conf
+RUN echo -e "php_admin_value[error_log] = stdout\nphp_admin_flag[log_errors] = on"
+    >> /etc/php/php-fpm.conf
+ADD ./enable_extensions.sh /tmp/enable_extensions.sh
+RUN /bin/sh /tmp/enable_extensions.sh && rm /tmp/enable_extensions.sh
+ADD ./apcu.ini /etc/php/conf.d/apcu.ini
+
+EXPOSE 9000
+
+CMD ["/usr/bin/php-fpm", "-F"]
+						</code></pre>
+					</section>
+
+					<section>
+						<h2>What is important while building</h2>
+						<p>
+							There is actually one thing very important to keep in mind while building containers.
+							The processes running inside the container MUST NOT fork. So the process must stay in the
+							foreground, if it forks docker will assume the process is done and quit the container.
+						</p>
+					</section>
+
+					<section>
+						<h2>The Actual building</h2>
+						<p>
+							Lets just show one example of building, basically it is always the same.
+						</p>
+						<pre><code class='bash'>
+$ cd /var/docker/percona
+#./build.sh
+
+$ docker build -t blackikeeagle/percona .
+						</code></pre>
+						<p><small>for all options: docker build --help</small></p>
+					</section>
+				</section>
+
+				<section>
 					<h2>Questions ?</h2>
 					<p class='fragment'><small>WARNING: you might have a lot of questions I don't know the answer to.</small></p>
 				</section>
