@@ -629,6 +629,61 @@ $ systemctl enable wordpress-fpm.service \
 				</section>
 
 				<section>
+					<section>
+						<h2>NOTES</h2>
+					</section>
+
+					<section>
+						<h2>dockerized volumes</h2>
+						<p>
+							Instead of mounting volumes on the host system we could have used dockerized volumes.
+							The reason not to do that is, it is very hard to persist your data between boots that way.
+						</p>
+					</section>
+
+					<section>
+						<h2>using -link</h2>
+						<p>
+							This usecase is for a single server with multiple docker containers. using the -link
+							parameter introduces more configuration overhead and possible trashing around with
+							environment variables.
+						</p>
+					</section>
+
+					<section>
+						<h2>sites-enabled volume</h2>
+						<p>
+							In this usecase the sites-enabled is pre-filled with the configurations we wanted to have.
+							A more flexible approach could be to add a volume to /etc/nginx/sites-enabled so you can
+							more dynamically update your setup.
+						</p>
+					</section>
+
+					<section>
+						<h2>'log' into a running container</h2>
+						<p>
+							Before v 0.9 of docker it was impossible to get into a running container and do some
+							additional stuff with it. If you have a recent linux distribution with util-linux &gt; 2.23,
+							you can use nsenter.
+						</p>
+						<pre><code class='bash'>
+$ nsenter --target $(docker inspect --format "{{ .State.Pid }}" nginx) \
+    --mount --ipc --uts --net --pid
+						</code></pre>
+					</section>
+
+					<section>
+						<h2>nginx reload</h2>
+						<p>
+							Enter the container with nsenter and ...
+						</p>
+						<pre><code class='bash'>
+$ /usr/bin/kill -HUP 1
+						</pre></code>
+					</section>
+				</section>
+
+				<section>
 					<h2>Questions ?</h2>
 					<p class='fragment'><small>WARNING: you might have a lot of questions I don't know the answer to.</small></p>
 				</section>
