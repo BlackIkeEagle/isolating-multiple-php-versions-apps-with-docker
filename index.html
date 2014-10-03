@@ -379,6 +379,143 @@ docker run -i -t blackikeeagle/percona /bin/bash
 				</section>
 
 				<section>
+					<section>
+						<h2>Getting there</h2>
+					</section>
+
+					<section>
+						<h2>Our apps</h2>
+						<p>
+							To make it easy we just 'install' the apps on our host in subfolders of /srv
+						</p>
+						<ul>
+							<li>/srv/wordpress</li>
+							<li>/srv/mybb</li>
+							<li>/srv/owncloud</li>
+						</ul>
+					</section>
+
+					<section>
+						<h2>Percona (MySQL)</h2>
+						<p>
+							Since docker containers are stateless we'll have to store our mysql data in a volume.
+							This way we can persist is between 'runs'.
+						</p>
+						<ul>
+							<li>/var/lib/mysql</li>
+						</ul>
+					</section>
+
+					<section>
+						<h2>Percona (MySQL)</h2>
+						<p>We'll run our percona container with a volume mounted to the host</p>
+						<pre><code class='bash'>
+$ docker -v /var/lib/mysql:/var/lib/mysql blackikeeagle/percona
+						</code></pre>
+						<p><small>NOTE: we need to initialize mysql in /var/lib/mysql</small></p>
+					</section>
+
+					<section>
+						<h2>The Docker network setup</h2>
+						<ul>
+							<li>Docker internal network: 192.168.1.0/24</li>
+							<li>it is similar to host only networking with vagrant</li>
+							<li>'Host' will get 192.168.1.1</li>
+							<li>the hosts exposed services will be reachable on 192.168.1.1</li>
+						</ul>
+						<!--
+						<p>
+							In the testcase the docker network is running on 192.168.1.0/24. For those who are familiar
+							with the host-only networking from vagrant, you can comare its behaviour with that.
+							This means our host will connnect from 192.168.1.1 to the docker containers. Also the
+							services exposed (meaning not only to localhost) on the host will be reacheable from
+							within the containers.
+						</p>
+						-->
+					</section>
+
+					<section>
+						<h2>The fpm's</h2>
+						<p>
+							To make it easy for ourself we'll just run the fpm's on different ports, lets say
+							9001, 9002, 9003 :)
+						</p>
+					</section>
+
+					<section>
+						<h2>An fpm</h2>
+						<pre><code class='bash'>
+$ docker run \
+    -v /srv/owncloud:/srv/owncloud \
+    -p 192.168.1.1:9003:9000 \
+    sample/owncloud-fpm
+						</code></pre>
+					</section>
+
+					<section>
+						<h2>nginx fpm config</h2>
+						<pre><code class='nginx'>
+# Configure PHP-FPM stuff
+location ~ ^(?&lt;script_name&gt;.+?\.php)(?&lt;path_info&gt;/.*)?$ {
+    try_files $script_name = 404;
+    fastcgi_pass  192.168.1.1:9003;
+    fastcgi_param PATH_INFO $path_info;
+    fastcgi_param HTTPS $https;
+    fastcgi_intercept_errors on;
+
+    fastcgi_param PHP_VALUE
+        &quot;upload_max_filesize = 1024M \n post_max_size = 1024M&quot;;
+    fastcgi_param SCRIPT_FILENAME /srv/owncloud$script_name;
+    include fastcgi_params;
+}
+						</code></pre>
+					</section>
+
+					<section>
+						<h2>Bringing it all together</h2>
+					</section>
+
+					<section>
+						<h2>running the fpm's</h2>
+						<pre><code class='bash'>
+$ docker run \
+    -v /srv/wordpress:/srv/wordpress \
+    -p 192.168.1.1:9001:9000 sample/wordpress-fpm
+						</code></pre>
+						<pre><code class='bash'>
+$ docker run \
+    -v /srv/mybb:/srv/mybb \
+    -p 192.168.1.1:9002:9000 sample/mybb-fpm
+						</code></pre>
+						<pre><code class='bash'>
+$ docker run \
+    -v /srv/owncloud:/srv/owncloud \
+    -p 192.168.1.1:9003:9000 sample/owncloud-fpm
+						</code></pre>
+						<p><small>Here you see a one-to-one mapping of the volume's, this is not required, but handy</small></p>
+					</section>
+					<section>
+						<h2>running percona</h2>
+						<pre><code class='bash'>
+$ docker run \
+    -v /var/lib/mysql:/var/lib/mysql \
+    -p 192.168.1.1:3306:3306 blackikeeagle/percona
+						</code></pre>
+					</section>
+
+					<section>
+						<h2>running nginx</h2>
+						<pre><code class='bash'>
+docker run \
+    -v /srv/wordpress:/srv/wordpress \
+    -v /srv/mybb:/srv/mybb \
+    -v /srv/owncloud:/srv/owncloud \
+    -p 0.0.0.0:80:80 blackikeeagle/nginx
+						</code></pre>
+					</section>
+				</section>
+
+				<section>
 					<h2>Questions ?</h2>
 					<p class='fragment'><small>WARNING: you might have a lot of questions I don't know the answer to.</small></p>
 				</section>
