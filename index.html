@@ -310,6 +310,43 @@ $ docker build -t blackikeeagle/percona .
 				</section>
 
 				<section>
+					<section>
+						<h2>Check what images we have</h2>
+						<p>
+							After building all our base containers we might want to find out what their names are
+							and maybe if we want to completely rebuild throw away an existing container and start
+							'from scratch'.
+						</p>
+						<p><small>for all options: docker images --help</small></p>
+					</section>
+
+					<section>
+						<h2>For our usecase:</h2>
+						<pre class='stretch'><code class='bash'>
+$ docker images
+REPOSITORY                TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
+sample/owncloud-fpm       latest              5911540f5415        40 minutes ago      410.8 MB
+sample/mybb-fpm           latest              143668a193b2        42 minutes ago      288.7 MB
+sample/wordpress-fpm      latest              aa05762f4452        45 minutes ago      369.8 MB
+blackikeeagle/percona     latest              fd2265e8f37d        49 minutes ago      605.7 MB
+blackikeeagle/nginx       latest              ca827303f7fd        50 minutes ago      328 MB
+ubuntu                    14.04               6b4e8a7373fe        45 hours ago        194.8 MB
+ubuntu                    12.04               b45a6cbea6d1        45 hours ago        111 MB
+blackikeeagle/archlinux   latest              b4bbf04b414e        5 days ago          312.2 MB
+						</code></pre>
+					</section>
+
+					<section>
+						<h2>Handling the images</h2>
+						<ul>
+							<li>run</li>
+							<li>update</li>
+							<li>remove</li>
+						</ul>
+					</section>
+				</section>
+
+				<section>
 					<h2>Questions ?</h2>
 					<p class='fragment'><small>WARNING: you might have a lot of questions I don't know the answer to.</small></p>
 				</section>
