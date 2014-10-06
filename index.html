@@ -460,28 +460,20 @@ $ docker run \
     sample/owncloud-fpm
 						</code></pre>
 					</section>
+				</section>
 
+				<section>
 					<section>
-						<h2>nginx fpm config</h2>
-						<pre><code class='nginx'>
-# Configure PHP-FPM stuff
-location ~ ^(?&lt;script_name&gt;.+?\.php)(?&lt;path_info&gt;/.*)?$ {
-    try_files $script_name = 404;
-    fastcgi_pass  192.168.1.1:9003;
-    fastcgi_param PATH_INFO $path_info;
-    fastcgi_param HTTPS $https;
-    fastcgi_intercept_errors on;
-
-    fastcgi_param PHP_VALUE
-        &quot;upload_max_filesize = 1024M \n post_max_size = 1024M&quot;;
-    fastcgi_param SCRIPT_FILENAME /srv/owncloud$script_name;
-    include fastcgi_params;
-}
-						</code></pre>
+						<h2>Bringing it all together with ports</h2>
 					</section>
 
 					<section>
-						<h2>Bringing it all together</h2>
+						<h2>running percona</h2>
+						<pre><code class='bash'>
+$ docker run \
+    -v /var/lib/mysql:/var/lib/mysql \
+    -p 192.168.1.1:3306:3306 blackikeeagle/percona
+						</code></pre>
 					</section>
 
 					<section>
@@ -503,12 +495,23 @@ $ docker run \
 						</code></pre>
 						<p><small>Here you see a one-to-one mapping of the volume's, this is not required, but handy</small></p>
 					</section>
+
 					<section>
-						<h2>running percona</h2>
-						<pre><code class='bash'>
-$ docker run \
-    -v /var/lib/mysql:/var/lib/mysql \
-    -p 192.168.1.1:3306:3306 blackikeeagle/percona
+						<h2>nginx fpm config</h2>
+						<pre><code class='nginx'>
+# Configure PHP-FPM stuff
+location ~ ^(?&lt;script_name&gt;.+?\.php)(?&lt;path_info&gt;/.*)?$ {
+    try_files $script_name = 404;
+    fastcgi_pass  192.168.1.1:9003;
+    fastcgi_param PATH_INFO $path_info;
+    fastcgi_param HTTPS $https;
+    fastcgi_intercept_errors on;
+
+    fastcgi_param PHP_VALUE
+        &quot;upload_max_filesize = 1024M \n post_max_size = 1024M&quot;;
+    fastcgi_param SCRIPT_FILENAME /srv/owncloud$script_name;
+    include fastcgi_params;
+}
 						</code></pre>
 					</section>
 
@@ -522,6 +525,84 @@ docker run \
     -p 0.0.0.0:80:80 blackikeeagle/nginx
 						</code></pre>
 					</section>
+				</section>
+
+				<section>
+					<section>
+						<h2>Bringing it all together with --link</h2>
+					</section>
+
+					<section>
+						<h2>running percona</h2>
+						<pre><code class='bash'>
+$ docker run \
+    -v /var/lib/mysql:/var/lib/mysql \
+    -p 192.168.1.1:3306:3306 blackikeeagle/percona
+						</code></pre>
+					</section>
+
+					<section>
+						<h2>running the fpm's</h2>
+						<pre><code class='bash'>
+$ docker run \
+    -v /srv/wordpress:/srv/wordpress \
+    --link percona:mysql sample/wordpress-fpm
+						</code></pre>
+						<pre><code class='bash'>
+$ docker run \
+    -v /srv/mybb:/srv/mybb \
+    --link percona:mysql sample/mybb-fpm
+						</code></pre>
+						<pre><code class='bash'>
+$ docker run \
+    -v /srv/owncloud:/srv/owncloud \
+    --link percona:mysql sample/owncloud-fpm
+						</code></pre>
+						<p><small>Here you see a one-to-one mapping of the volume's, this is not required, but handy</small></p>
+					</section>
+
+					<section>
+						<h2>nginx fpm config</h2>
+						<pre><code class='nginx'>
+# Configure PHP-FPM stuff
+location ~ ^(?&lt;script_name&gt;.+?\.php)(?&lt;path_info&gt;/.*)?$ {
+    try_files $script_name = 404;
+    fastcgi_pass  owncloud:9000;
+    fastcgi_param PATH_INFO $path_info;
+    fastcgi_param HTTPS $https;
+    fastcgi_intercept_errors on;
+
+    fastcgi_param PHP_VALUE
+        &quot;upload_max_filesize = 1024M \n post_max_size = 1024M&quot;;
+    fastcgi_param SCRIPT_FILENAME /srv/owncloud$script_name;
+    include fastcgi_params;
+}
+						</code></pre>
+					</section>
+
+					<section>
+						<h2>running nginx</h2>
+						<pre><code class='bash'>
+docker run \
+    -v /srv/wordpress:/srv/wordpress \
+    -v /srv/mybb:/srv/mybb \
+    -v /srv/owncloud:/srv/owncloud \
+    --link wordpress-fpm:wordpress \
+    --link mybb-fpm:mybb \
+    --link owncloud-fpm:owncloud \
+    -p 0.0.0.0:80:80 blackikeeagle/nginx
+						</code></pre>
+					</section>
+
+					<section>
+						<h2>using --link</h2>
+						<p>
+							For this kind of setup using --link will be more error prone than using the ports method.
+							When an fpm container accidentally restarts, the link from nginx to it will be gone.
+							With the port method it will be just fine when fpm is back up.
+						</p>
+					</section>
+
 				</section>
 
 				<section>
@@ -610,6 +691,11 @@ WantedBy=multi-user.target
 							Even debian and ubuntu have voted to use it in the future. Although these still use
 							upstart, we need to look at the future.
 						</p>
+						<aside class='notes'>
+							<ul>
+								<li>unitfiles for --link can be found in the sample code</li>
+							</ul>
+						</aside>
 					</section>
 
 					<section>
@@ -647,15 +733,6 @@ $ systemctl enable wordpress-fpm.service \
 						<p>
 							Instead of mounting volumes on the host system we could have used dockerized volumes.
 							The reason not to do that is, it is very hard to persist your data between boots that way.
-						</p>
-					</section>
-
-					<section>
-						<h2>using -link</h2>
-						<p>
-							This usecase is for a single server with multiple docker containers. using the -link
-							parameter introduces more configuration overhead and possible trashing around with
-							environment variables.
 						</p>
 					</section>
 
