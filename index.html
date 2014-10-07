@@ -596,6 +596,42 @@ docker run \
 					</section>
 
 					<section>
+						<h2>environment variables</h2>
+						<pre><code>
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+HOSTNAME=d5f803ba46fe
+MYBB_PORT=tcp://192.168.1.4:9000
+MYBB_PORT_9000_TCP=tcp://192.168.1.4:9000
+MYBB_PORT_9000_TCP_ADDR=192.168.1.4
+MYBB_PORT_9000_TCP_PORT=9000
+MYBB_PORT_9000_TCP_PROTO=tcp
+MYBB_NAME=/clever_yonath/mybb
+MYBB_ENV_DEBIAN_FRONTEND=noninteractive
+OWNCLOUD_PORT=tcp://192.168.1.5:9000
+...
+WORDPRESS_NAME=/clever_yonath/wordpress
+WORDPRESS_ENV_DEBIAN_FRONTEND=noninteractive
+HOME=/root
+						</code></pre>
+					</section>
+
+					<section>
+						<h2>hosts entries</h2>
+						<pre><code>
+192.168.1.8     040a554b4ed3
+::1     localhost ip6-localhost ip6-loopback
+fe00::0 ip6-localnet
+ff00::0 ip6-mcastprefix
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+127.0.0.1       localhost
+192.168.1.3     wordpress
+192.168.1.4     mybb
+192.168.1.5     owncloud
+						</code></pre>
+					</section>
+
+					<section>
 						<h2>using --link</h2>
 						<p>
 							For this kind of setup using --link will be more error prone than using the ports method.
